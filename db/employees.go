@@ -3,16 +3,17 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type Employee struct{
-    Id int
-    Team_id string
-    Name string
-    Last_name string
-    Document string
-    Birth string
-    Area string
+    Id int              `json:"id"`
+    Team_id string      `json:"team"`
+    Name string         `json:"name"`
+    Last_name string    `json:"last"`
+    Document string     `json:"document"`
+    Birth string        `json:"birth"`
+    Area string         `json:"area"`
 }
 
 func RegisterEmployee(db *sql.DB, team_id int, name string, last_name string, document string, birth string, area string) (int, error) {
@@ -29,30 +30,43 @@ func RegisterEmployee(db *sql.DB, team_id int, name string, last_name string, do
     return id, err
 }
 
-func GetAllEmployees(db *sql.DB, id int) ([]Employee, error) {
-    var returned []Employee
-    var tmp Employee
-
+func GetAllEmployees(db *sql.DB) ([]Employee, error) {
     queryStr := fmt.Sprintf("select * from \"Employee\"")
     rows, err := db.Query(queryStr)
     if err != nil {
         return nil, nil
     }
 
-    for rows.Next() {
-        if errScan := rows.Scan(
-            &tmp.Id,
-            &tmp.Team_id,
-            &tmp.Name,
-            &tmp.Last_name,
-            &tmp.Document,
-            &tmp.Birth,
-            &tmp.Area,
-        ); errScan != nil {
-            return nil, errScan
-        }
+    var num int
+    count, counQueryErr := db.Query("select count (id) from \"Employee\";")
+    if counQueryErr != nil {
+        log.Panicln(counQueryErr)
+    }
 
-        returned = append(returned, tmp)
+    if !count.Next() {
+        num = 0
+    }
+
+    if scanErr := count.Scan(&num); scanErr != nil {
+        log.Panicln(scanErr)
+    }
+
+    returned := make([]Employee, num)
+    for i := range returned {
+        if rows.Next() {
+            errScan := rows.Scan(
+                &returned[i].Id,
+                &returned[i].Team_id,
+                &returned[i].Name,
+                &returned[i].Last_name,
+                &returned[i].Document,
+                &returned[i].Birth,
+                &returned[i].Area,
+            );
+            if errScan != nil{
+                return nil, errScan
+            }
+        }
     }
 
 

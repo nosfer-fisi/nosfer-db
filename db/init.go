@@ -5,6 +5,7 @@ import (
 	"fmt"
 
     "nosfer-db/pkg"
+    _ "github.com/lib/pq"
 )
 
 func CreateDb() (*sql.DB, error) {

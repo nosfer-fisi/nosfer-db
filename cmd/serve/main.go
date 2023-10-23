@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	dbutils "nosfer-db/db"
-
-	_ "github.com/lib/pq"
+	handlers "nosfer-db/handlers"
 )
 
 
@@ -16,23 +16,12 @@ func main() {
         return
     }
 
-    employeeId, registerErr := dbutils.RegisterEmployee(db, 0, "Victor", "Alva", "32820241", "1966-01-08", "banco de sangre")
-    if registerErr != nil {
-        log.Println(registerErr)
-        return
+    empHandle := &handlers.EmployeesHandles{
+        Db: db,
     }
 
-    rows, empErr := dbutils.GetEmployeeById(db, employeeId)
-    if empErr != nil {
-        log.Println(empErr)
-        return
-    }
-
-    if !rows.Next() {
-        return
-    }
-
-    rows.Scan()
+    http.Handle("/api/employees/", empHandle)
+    http.ListenAndServe(":6969", nil)
 }
 
 
