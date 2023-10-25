@@ -10,6 +10,8 @@ import (
 
 
 func main() {
+    port := "6969"
+
     db, errCreate := dbutils.CreateDb()
     if errCreate != nil {
         log.Println(errCreate)
@@ -20,7 +22,13 @@ func main() {
         Db: db,
     }
 
-    http.HandleFunc("/api/employees/", handlers.CorsMiddleware(empHandle, "GET"))
-    http.ListenAndServe(":6969", nil)
+    regHandle := &handlers.AddEmployee{
+        Db: db,
+    }
+
+    http.HandleFunc("/api/employees/register", handlers.CorsMiddleware(regHandle, "POST"))
+    http.HandleFunc("/api/employees/get", handlers.CorsMiddleware(empHandle, "GET"))
+    log.Println("Starting server @ " + port)
+    http.ListenAndServe(":" + port, nil)
 }
 
