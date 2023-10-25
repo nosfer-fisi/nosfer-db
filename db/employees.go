@@ -16,9 +16,9 @@ type Employee struct{
     Area string         `json:"area"`
 }
 
-func RegisterEmployee(db *sql.DB, team_id int, name string, last_name string, document string, birth string, area string) (int, error) {
+func RegisterEmployee(db *sql.DB, employee Employee) (int, error) {
     var id int
-    rows, err := db.Query("insert into \"Employee\" (team_id, name, last_name, document, birth, area) values ($1, $2, $3, $4, $5, $6) returning id;", team_id, name, last_name, document, birth, area)
+    rows, err := db.Query("insert into \"Employee\" (team_id, name, last_name, document, birth, area) values ($1, $2, $3, $4, $5, $6) returning id;", employee.TeamId, employee.Name, employee.LastName, employee.Document, employee.Birth, employee.Area)
 
     if rows.Next() {
         errScan := rows.Scan(&id)
