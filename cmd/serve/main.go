@@ -16,16 +16,11 @@ func main() {
         return
     }
 
-    empHandle := &handlers.EmployeesHandles{
+    empHandle := &handlers.GetEmployees{
         Db: db,
     }
 
-    http.Handle("/api/employees/", empHandle)
+    http.HandleFunc("/api/employees/", handlers.CorsMiddleware(empHandle, "GET"))
     http.ListenAndServe(":6969", nil)
 }
-
-
-
-
-
 

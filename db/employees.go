@@ -8,9 +8,9 @@ import (
 
 type Employee struct{
     Id int              `json:"id"`
-    Team_id string      `json:"team"`
+    TeamId string       `json:"team"`
     Name string         `json:"name"`
-    Last_name string    `json:"last"`
+    LastName string     `json:"last_name"`
     Document string     `json:"document"`
     Birth string        `json:"birth"`
     Area string         `json:"area"`
@@ -30,15 +30,38 @@ func RegisterEmployee(db *sql.DB, team_id int, name string, last_name string, do
     return id, err
 }
 
-func GetAllEmployees(db *sql.DB) ([]Employee, error) {
-    queryStr := fmt.Sprintf("select * from \"Employee\"")
-    rows, err := db.Query(queryStr)
-    if err != nil {
-        return nil, nil
+func QueryEmployees(db *sql.DB, fields []QueryParam) ([]Employee, error) {
+    baseQueryStr := "select * from \"Employee\""
+    countQueryStr := "select count (*) from \"Employee\""
+    lenFields := len(fields)
+
+    if lenFields != 0 {
+        whereStr := " where "
+        for i, field := range fields {
+            if field.ParamType == STRING {
+                whereStr += field.ParamName + " = '" + field.ParamValue + "'"
+            } else {
+                whereStr += field.ParamName + " = " + field.ParamValue
+            }
+
+            if i != lenFields - 1 {
+                whereStr += " AND "
+            }
+        }
+
+        baseQueryStr += whereStr + ";"
+        countQueryStr += whereStr + ";"
     }
 
+    rows, err := db.Query(baseQueryStr)
+    if err != nil {
+        return nil, err
+    }
+
+    log.Printf("%s [] %s", baseQueryStr, countQueryStr)
+
     var num int
-    count, counQueryErr := db.Query("select count (id) from \"Employee\";")
+    count, counQueryErr := db.Query(countQueryStr)
     if counQueryErr != nil {
         log.Panicln(counQueryErr)
     }
@@ -56,9 +79,9 @@ func GetAllEmployees(db *sql.DB) ([]Employee, error) {
         if rows.Next() {
             errScan := rows.Scan(
                 &returned[i].Id,
-                &returned[i].Team_id,
+                &returned[i].TeamId,
                 &returned[i].Name,
-                &returned[i].Last_name,
+                &returned[i].LastName,
                 &returned[i].Document,
                 &returned[i].Birth,
                 &returned[i].Area,
