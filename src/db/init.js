@@ -1,13 +1,12 @@
 import pg from 'pg'
 
-
 // returns a new pg.Client object
 const genNewClient = () => {
     return new pg.Client({
-        user:     "bauer",
-        password: "lol",
-        host:     "24.199.90.161",
-        database: "nosfer_db",
+        user:     process.env.USER,
+        password: process.env.PASSWORD,
+        host:     process.env.HOST,
+        database: process.env.DATABASE,
     })
 }
 

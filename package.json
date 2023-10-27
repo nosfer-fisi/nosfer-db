@@ -1,10 +1,11 @@
 {
   "type": "module",
   "dependencies": {
+    "dotenv": "^16.3.1",
     "pg": "^8.11.3",
     "sql-bricks": "^3.0.1"
   },
   "scripts": {
-    "serve": "node ./src/serve.js"
+    "serve": "bun -r dotenv/config your_script.js ./src/serve.js"
   }
 }
