@@ -1,29 +1,21 @@
-import pg from 'pg'
-
-const db = new pg.Client({
-    user:     "bauer",
-    password: "lol",
-    host:     "24.199.90.161",
-    database:   "nosfer_db",
-})
+import { genNewClient } from './init.js'
+const build = require('sql-bricks')
 
 /**
- * @param {pg.Client} client
+ * @param {object} columns
+ * @param {string} table
  */
-const newQuery = async (client) => {
-    return client.query(`SELECT * FROM "Employee";`)
+const queryEmployees = async (table, columns) => {
+    const newClient = genNewClient()
+    newClient.connect()
+
+    const queryParams = build.select().from(table).where(columns).toParams()
+
+    newClient.end()
+    return await newClient.query(queryParams)
 }
 
-console.log(db.connect((err) => {
-    console.error(err)
-}))
-
-
-db.on('error', (err) => {
-  console.error('something bad has happened!', err.stack)
-})
-
-newQuery(db).then((res) => {
-    console.log(res); db.end()
+queryEmployees({
+    id: 19
 })
 
