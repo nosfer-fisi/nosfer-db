@@ -5,7 +5,7 @@ const genNewClient = () => {
     return new pg.Client({
         user:     process.env.USER,
         password: process.env.PASSWORD,
-        host:     process.env.HOST,
+        host:     process.env.DB_HOST,
         database: process.env.DATABASE,
     })
 }

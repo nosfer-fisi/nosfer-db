@@ -1,13 +1,12 @@
-import {
-    Client
-} from 'pg'
+import pg from 'pg'
 
-const build = require('sql-bricks')
+const build = require('sql-bricks-postgres')
 
 /**
- * @param {Client} client
+ * @param {pg.Client} client
  * @param {object} columns
  * @param {string} table
+ * @returns {Promise<pg.QueryResult<any>>}
  */
 const dbRetrieve = async (client, table, columns) => {
     const queryParams = build.select()
@@ -17,10 +16,21 @@ const dbRetrieve = async (client, table, columns) => {
     return await client.query(queryParams)
 }
 
+
+/**
+ * returns the same row that was registered
+ * for posterior processing
+ *
+ * @param {pg.Client} client
+ * @param {object} columns
+ * @param {string} table
+ * @returns {Promise<pg.QueryResult<any>>}
+ */
 const dbAddEntry = async (client, table, columns) => {
     const queryParams = build.insert()
         .into(table)
-        .values(columns).toParams()
+        .values(columns)
+        .returning("*").toParams()
 
     return await client.query(queryParams)
 }

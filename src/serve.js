@@ -5,11 +5,10 @@ import {
 } from './handlers/cors.js'
 
 import {
-    getEmployees
+    getEmployees,
+    regEmployees
 } from './handlers/get_employees.js'
 
-const host = 'localhost'
-const port = 8080
 
 /**
  * @param {http.IncomingMessage} req
@@ -18,8 +17,10 @@ const port = 8080
 const mainRequestHandler = (req, res) => {
     const reqUrl = new URL(req.url, `http://${req.headers.host}`)
 
-    if (reqUrl.pathname == "/api/employees/get") {
+    if (reqUrl.pathname === "/api/employees/get") {
         corsMiddleware("GET", getEmployees, reqUrl, req, res)
+    } else if (reqUrl.pathname === "/api/employees/add") {
+        corsMiddleware("POST", regEmployees, reqUrl, req, res)
     } else {
         res.writeHead(404)
         res.end()
@@ -28,8 +29,8 @@ const mainRequestHandler = (req, res) => {
 }
 
 const server = http.createServer(mainRequestHandler)
-server.listen(port, host, () => {
-    console.log(`Server running @ ${port}`)
+server.listen(process.env.PORT, process.env.SERVER_HOST, () => {
+    console.log(`Server running @ ${process.env.PORT}`)
 })
 
 
