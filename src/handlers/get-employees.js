@@ -39,6 +39,3 @@ const getEmployees = (req, res, url) => {
 export {
     getEmployees
 }
-
-
-
