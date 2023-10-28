@@ -9,7 +9,7 @@ const build = require('sql-bricks')
  * @param {object} columns
  * @param {string} table
  */
-const dbQuery = async (client, table, columns) => {
+const dbRetrieve = async (client, table, columns) => {
     const queryParams = build.select()
         .from(table)
         .where(columns).toParams()
@@ -17,7 +17,16 @@ const dbQuery = async (client, table, columns) => {
     return await client.query(queryParams)
 }
 
+const dbAddEntry = async (client, table, columns) => {
+    const queryParams = build.insert()
+        .into(table)
+        .values(columns).toParams()
+
+    return await client.query(queryParams)
+}
+
 export {
-    dbQuery
+    dbAddEntry,
+    dbRetrieve
 }
 
