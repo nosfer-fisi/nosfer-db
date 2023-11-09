@@ -5,21 +5,25 @@ import {
 } from './handlers/cors.js'
 
 import {
+  dieWithBody
+} from './handlers/utils.js'
+
+import {
   getEmployees,
   regEmployees,
-  getDiseases,
-  getDonations,
-  getLaboratories,
-  getMedicalExams,
-  getPersons,
-  getQualityControls,
-  getRequests,
-  getStorages,
-  getUnits
+  //getDiseases,
+  //getDonations,
+  //getLaboratories,
+  //getMedicalExams,
+  //getPersons,
+  //getQualityControls,
+  //getRequests,
+  //getStorages,
+  //getUnits
 } from './handlers'
 
 
-const Router = {
+const RouterMux = {
   "/api/employees/get": {
     handle: getEmployees,
     method: "GET",
@@ -28,6 +32,7 @@ const Router = {
     handle: regEmployees,
     method: "POST",
   },
+  /*
   "/api/diseases/get": {
     handle: getDiseases,
     method: "GET",
@@ -64,6 +69,7 @@ const Router = {
     handle: getUnits,
     method: "GET",
   },
+  */
 }
 
 
@@ -75,19 +81,22 @@ const Router = {
 const mainRequestHandler = (req, res) => {
   const reqUrl = new URL(req.url, `http://${req.headers.host}`)
 
-  if (Router[reqUrl.pathname] === undefined) {
-    res.writeHead(404)
-    res.end()
+  if (RouterMux[reqUrl.pathname] === undefined) {
+    dieWithBody(res, "endpoint not valid", 404)
+    return
+  } else if (RouterMux[reqUrl.pathname].method !== req.method) {
+    dieWithBody(res, "method not supported for this endpoint", 405)
     return
   } else {
-    console.log(Router[reqUrl.pathname])
+    console.log(RouterMux[reqUrl.pathname])
     corsMiddleware(
-      Router[reqUrl.pathname].method,
-      Router[reqUrl.pathname].handle,
+      RouterMux[reqUrl.pathname].method,
+      RouterMux[reqUrl.pathname].handle,
       reqUrl,
       req,
       res,
     )
+    return
   }
 }
 

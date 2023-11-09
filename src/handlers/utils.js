@@ -1,5 +1,5 @@
 import {
-  IncomingMessage
+  IncomingMessage, ServerResponse
 } from 'node:http'
 
 /**
@@ -38,9 +38,31 @@ const paramsToObject = (params) => {
   return res
 }
 
+
+/**
+ * @param {ServerResponse} res
+ * @param {string} message
+ * @param {number} code
+ */
+const dieWithBody = (res, message, code) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8")
+  res.setHeader("Access-Control-Allow-Methods", "ANY")
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Headers", "*")
+
+  res.write(JSON.stringify({
+    errorCode: code,
+    message: message,
+  }))
+
+  res.writeHead(code)
+  res.end()
+}
+
 export {
   getJSONBody,
-  paramsToObject
+  paramsToObject,
+  dieWithBody
 }
 
 
