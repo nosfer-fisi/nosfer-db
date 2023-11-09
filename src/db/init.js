@@ -1,6 +1,8 @@
 import pg from 'pg'
 
-// returns a new pg.Client object
+/**
+ * @returns {pg.Client}
+ */
 const genNewClient = () => {
     return new pg.Client({
         user:     process.env.USER,

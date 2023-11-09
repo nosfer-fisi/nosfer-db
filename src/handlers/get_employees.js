@@ -11,7 +11,12 @@ import {
 import {
     genNewClient
 } from '../db/init.js'
-import {getJSONBody} from './utils.js'
+
+import {
+  getJSONBody,
+  paramsToObject
+} from './utils.js'
+
 
 /**
  * @param {IncomingMessage} req
@@ -48,7 +53,7 @@ const getEmployees = (req, res, url) => {
 
     if (req.method === "GET") {
         dbClient.connect(console.err).then(() => {
-            dbRetrieve(dbClient, "Employee", url.searchParams).then((response) => {
+            dbRetrieve(dbClient, "Employee", paramsToObject(url.searchParams)).then((response) => {
                 dbClient.end()
                 res.write(JSON.stringify(response.rows))
                 res.writeHead(200)

@@ -7,6 +7,7 @@
     "sql-bricks-postgres": "^0.6.0"
   },
   "scripts": {
-    "serve": "bun --watch -r dotenv/config ./src/serve.js"
+    "dev": "bun --watch -r dotenv/config ./src/serve.js",
+    "serve": "bun -r dotenv/config ./src/serve.js"
   }
 }
