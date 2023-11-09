@@ -1,15 +1,15 @@
 import {
-    IncomingMessage,
-    ServerResponse
+  IncomingMessage,
+  ServerResponse
 } from 'node:http'
 
 import {
-    dbAddEntry,
-    dbRetrieve
+  dbAddEntry,
+  dbRetrieve
 } from '../db/query.js'
 
 import {
-    genNewClient
+  genNewClient
 } from '../db/init.js'
 
 import {
@@ -24,23 +24,23 @@ import {
  * @param {URL} url
  */
 const regEmployees = (req, res, _) => {
-    const dbClient = genNewClient()
+  const dbClient = genNewClient()
 
-    if (req.method === "POST") {
-        dbClient.connect(console.err).then(() => {
-            getJSONBody(req).then((jsonRes) => {
-                dbAddEntry(dbClient, "Employee", jsonRes).then((finalRes) => {
-                    res.write(JSON.stringify(finalRes.rows))
-                    res.writeHead(200)
-                    res.end()
-                })
-            })
+  if (req.method === "POST") {
+    dbClient.connect(console.err).then(() => {
+      getJSONBody(req).then((jsonRes) => {
+        dbAddEntry(dbClient, "Employee", jsonRes).then((finalRes) => {
+          res.write(JSON.stringify(finalRes.rows))
+          res.writeHead(200)
+          res.end()
         })
-    } else {
-        res.writeHead(405)
-        res.end()
-        return
-    }
+      })
+    })
+  } else {
+    res.writeHead(405)
+    res.end()
+    return
+  }
 }
 
 /**
@@ -49,28 +49,28 @@ const regEmployees = (req, res, _) => {
  * @param {URL} url
  */
 const getEmployees = (req, res, url) => {
-    const dbClient = genNewClient()
+  const dbClient = genNewClient()
 
-    if (req.method === "GET") {
-        dbClient.connect(console.err).then(() => {
-            dbRetrieve(dbClient, "Employee", paramsToObject(url.searchParams)).then((response) => {
-                dbClient.end()
-                res.write(JSON.stringify(response.rows))
-                res.writeHead(200)
-                res.end()
-                return
-            })
-        })
-    } else {
-        res.writeHead(405)
+  if (req.method === "GET") {
+    dbClient.connect(console.err).then(() => {
+      dbRetrieve(dbClient, "Employee", paramsToObject(url.searchParams)).then((response) => {
+        dbClient.end()
+        res.write(JSON.stringify(response.rows))
+        res.writeHead(200)
         res.end()
         return
-    }
+      })
+    })
+  } else {
+    res.writeHead(405)
+    res.end()
+    return
+  }
 }
 
 export {
-    getEmployees,
-    regEmployees
+  getEmployees,
+  regEmployees
 }
 
 
