@@ -27,22 +27,20 @@ import {
 const regEmployees = (req, res, _) => {
   const dbClient = genNewClient()
 
-  if (req.method === "POST") {
-    dbClient.connect(console.err).then(() => {
-      getJSONBody(req).then((jsonRes) => {
-        dbAddEntry(dbClient, "Employee", jsonRes).then((finalRes) => {
-          dbClient.end()
-          memoryCache.set('employees', finalRes.rows)
-          res.write(JSON.stringify(finalRes.rows))
-          res.writeHead(200)
-          res.end()
-        })
+  dbClient.connect(() => {
+    dieWithBody(res, "db connection failed", 500)
+  }).then(() => {
+    getJSONBody(req).then((jsonRes) => {
+      dbAddEntry(dbClient, "Employee", jsonRes).then((finalRes) => {
+        const rows = finalRes.rows
+        dbClient.end()
+        memoryCache.set('employees', rows)
+        answerAndClose(res, JSON.stringify(rows), 200)
       })
     })
-  } else {
-    dieWithBody(res, "method not allowed", 405)
-    return
-  }
+  })
+
+  return
 }
 
 /**
@@ -50,20 +48,17 @@ const regEmployees = (req, res, _) => {
  * @param {ServerResponse} res
  * @param {URL} url
  */
-const getEmployees = (req, res, url) => {
+const getEmployees = (_, res, url) => {
   const dbClient = genNewClient()
   const memoryCache = require('../db/cache')
   const cachedRows = memoryCache.get('employees')
   const params = paramsToObject(url.searchParams)
   let returnable = {}
 
-  if (req.method !== "GET") {
-    dieWithBody(res, "method not allowed", 405)
-    return
-  }
-
   if (cachedRows === undefined) {
-    dbClient.connect(console.err).then(() => {
+    dbClient.connect(() => {
+      dieWithBody(res, "db connection failed", 500)
+    }).then(() => {
       dbRetrieve(dbClient, 'Employee', paramsToObject(url.searchParams)).then((response) => {
         dbClient.end()
         returnable = response.rows
