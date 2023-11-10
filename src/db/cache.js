@@ -1,9 +1,6 @@
-const memoryCache = module.exports = () => {
-    const cache = {};
-    return {
-        get: function (key) { return cache[key]; },
-        set: function (key, val) { cache[key] = val; }
-    }
+const memoryCache = module.exports = {
+  get: function (key) { return this[key]; },
+  set: function (key, val) { this[key] = val; }
 }
 
 

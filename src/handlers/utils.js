@@ -59,10 +59,22 @@ const dieWithBody = (res, message, code) => {
   res.end()
 }
 
+/**
+ * @param {ServerResponse} res
+ * @param {string} message
+ * @param {number} code
+ */
+const answerAndClose = (res, message, code) => {
+  res.write(message)
+  res.writeHead(code)
+  res.end()
+}
+
 export {
   getJSONBody,
   paramsToObject,
-  dieWithBody
+  dieWithBody,
+  answerAndClose
 }
 
 
