@@ -9,5 +9,8 @@
   "scripts": {
     "dev": "bun --watch -r dotenv/config ./src/serve.js",
     "serve": "bun -r dotenv/config ./src/serve.js"
+  },
+  "devDependencies": {
+    "bun-types": "^1.0.11"
   }
 }

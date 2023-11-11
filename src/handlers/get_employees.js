@@ -5,7 +5,6 @@ import {
 
 import {
   dbAddEntry,
-  dbRetrieve
 } from '../db/query.js'
 
 import {
@@ -15,8 +14,8 @@ import {
 import {
   getJSONBody,
   paramsToObject,
-  dieWithBody,
-  answerAndClose
+  answerAndClose,
+  updateCacheTable
 } from './utils.js'
 
 /**
@@ -24,22 +23,19 @@ import {
  * @param {ServerResponse} res
  * @param {URL} url
  */
-const regEmployees = (req, res, _) => {
+const regEmployees = async (req, res, _) => {
   const dbClient = genNewClient()
+  const body = await getJSONBody(req)
 
-  dbClient.connect((err) => {
-    dieWithBody(res, `db connection failed: ${err}`, 500)
-  }).then(() => {
-    getJSONBody(req).then((jsonRes) => {
-      dbAddEntry(dbClient, "Employee", jsonRes).then((finalRes) => {
-        const rows = finalRes.rows
-        dbClient.end()
-        memoryCache.set('employees', rows)
-        answerAndClose(res, JSON.stringify(rows), 200)
-      })
+  dbClient.connect(console.err).then(() => {
+    dbAddEntry(dbClient, "Employee", body).then((finalRes) => {
+      dbClient.end()
+      const rows = finalRes.rows
+      answerAndClose(res, JSON.stringify(rows), 200)
     })
   })
 
+  updateCacheTable('Employee')
   return
 }
 
@@ -48,34 +44,30 @@ const regEmployees = (req, res, _) => {
  * @param {ServerResponse} res
  * @param {URL} url
  */
-const getEmployees = (_, res, url) => {
-  const dbClient = genNewClient()
+const getEmployees = async (_, res, url) => {
   const memoryCache = require('../db/cache')
-  const cachedRows = memoryCache.get('employees')
   const params = paramsToObject(url.searchParams)
+  let cachedRows = memoryCache.get('Employee')
 
   if (cachedRows === undefined) {
-    dbClient.connect(console.err).then(() => {
-      dbRetrieve(dbClient, 'Employee', paramsToObject(url.searchParams)).then((response) => {
-        dbClient.end()
-        const returnable = response.rows
-        answerAndClose(res, JSON.stringify(returnable), 200)
-        memoryCache.set('employees', response.rows)
-        return
-      })
-    })
-  } else {
-    const returnable = Object.keys(params).length === 0 ? cachedRows : cachedRows.filter((elem) => {
-      for (const key in params) {
-        if (elem[key] != params[key]) {
-          return false
-        }
-      }
-      return true
-    })
-    answerAndClose(res, JSON.stringify(returnable), 200)
+    cachedRows = await updateCacheTable('Employee')
   }
 
+  if (Object.keys(params).length === 0) {
+    answerAndClose(res, JSON.stringify(cachedRows), 200)
+    return
+  }
+
+   const filteredRows = cachedRows.filter((elem) => {
+    for (const key in params) {
+      if (elem[key] != params[key]) {
+        return false
+      }
+    }
+    return true
+  })
+
+  answerAndClose(res, JSON.stringify(filteredRows), 200)
   return
 }
 

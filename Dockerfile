@@ -15,3 +15,4 @@ RUN curl -fsSL https://bun.sh/install | bash
 COPY . .
 CMD  [ "bun", "run", "serve" ]
 EXPOSE 6969
+

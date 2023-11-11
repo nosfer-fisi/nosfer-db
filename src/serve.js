@@ -22,6 +22,10 @@ import {
   //getUnits
 } from './handlers'
 
+import {
+  regNewAccount,
+  verifyAccount
+} from './auth/login_account.js'
 
 const RouterMux = {
   "/api/employees/get": {
@@ -32,6 +36,14 @@ const RouterMux = {
     handle: regEmployees,
     method: "POST",
   },
+  "/api/account/verify": {
+    handle: verifyAccount,
+    method: "POST",
+  },
+  "/api/account/register": {
+    handle: regNewAccount,
+    method: "POST",
+  }
   /*
   "/api/diseases/get": {
     handle: getDiseases,
@@ -88,7 +100,6 @@ const mainRequestHandler = (req, res) => {
     dieWithBody(res, "method not supported for this endpoint", 405)
     return
   } else {
-    console.log(RouterMux[reqUrl.pathname])
     corsMiddleware(
       RouterMux[reqUrl.pathname].method,
       RouterMux[reqUrl.pathname].handle,

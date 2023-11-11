@@ -9,13 +9,12 @@ const build = require('sql-bricks-postgres')
  * @returns {Promise<pg.QueryResult<any>>}
  */
 const dbRetrieve = async (client, table, columns) => {
-    const queryParams = build.select()
-        .from(table)
-        .where(columns).toParams()
+  const queryParams = build.select()
+    .from(table)
+    .where(columns).toParams()
 
-    return await client.query(queryParams)
+  return await client.query(queryParams)
 }
-
 
 /**
  * returns the same row that was registered
@@ -27,16 +26,16 @@ const dbRetrieve = async (client, table, columns) => {
  * @returns {Promise<pg.QueryResult<any>>}
  */
 const dbAddEntry = async (client, table, columns) => {
-    const queryParams = build.insert()
-        .into(table)
-        .values(columns)
-        .returning("*").toParams()
+  const queryParams = build.insert()
+    .into(table)
+    .values(columns)
+    .returning("*").toParams()
 
-    return await client.query(queryParams)
+  return await client.query(queryParams)
 }
 
 export {
-    dbAddEntry,
-    dbRetrieve
+  dbAddEntry,
+  dbRetrieve
 }
 

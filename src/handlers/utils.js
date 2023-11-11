@@ -1,6 +1,15 @@
 import {
-  IncomingMessage, ServerResponse
+  IncomingMessage,
+  ServerResponse
 } from 'node:http'
+
+import {
+  dbRetrieve
+} from '../db/query'
+
+import {
+  genNewClient
+} from '../db/init'
 
 /**
  * @param {IncomingMessage} req
@@ -23,6 +32,24 @@ const getJSONBody = async (req) => {
     })
   })
 
+}
+
+
+/**
+ * @param {string} tableName
+ * @returns {Promise<any[]>}
+ */
+const updateCacheTable = async (tableName) => {
+  const memoryCache = require('../db/cache')
+  const dbClient = genNewClient()
+  dbClient.connect(console.err)
+
+  const newMemory = await dbRetrieve(dbClient, tableName, {})
+  const rows = newMemory.rows
+  memoryCache.set(tableName, rows)
+
+  dbClient.end()
+  return rows
 }
 
 /**
@@ -73,6 +100,7 @@ const answerAndClose = (res, message, code) => {
 export {
   getJSONBody,
   paramsToObject,
+  updateCacheTable,
   dieWithBody,
   answerAndClose
 }
