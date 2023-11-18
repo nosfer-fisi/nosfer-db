@@ -21,15 +21,8 @@ const hashPassword = async (password: string, salt: string): Promise<string | un
 /**
  * After retrieving the `salt`, this tests the password to see if it matches
  */
-const verifyPassword = async (password: string, salt: string) => {
-  const schema = string().oneOf(['bcrypt', 'argon2id', 'argon2d', 'argon2i'])
-  const valid_algo_verify = await schema.isValid(process.env.AUTH_HASH)
-  if (!valid_algo_verify) {
-    return undefined
-  }
-
-  const hashingAlgo = await schema.validate(process.env.AUTH_HASH)
-  return Bun.password.verify(password + salt, hashingAlgo)
+const verifyPassword = async (password: string, salt: string, hash: string) => {
+  return Bun.password.verify(password + salt, hash)
 }
 
 export {

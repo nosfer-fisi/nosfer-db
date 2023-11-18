@@ -6,7 +6,8 @@ import {
 } from '../handlers/utils'
 
 import {
-  verifyPassword
+  verifyPassword,
+  hashPassword
 } from '../auth/hash'
 
 import {
@@ -26,53 +27,93 @@ import * as yup from 'yup'
 
 const AccountSchema = yup.object({
   username: yup.string().required(),
-  hash: yup.string().required(),
-  employee_id: yup.string().required(),
-  salt: yup.string().required(),
+  password: yup.string().required(),
+  documento_empleado: yup.string().required(),
 })
 
 const regNewAccount = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
+  const dbClient = genNewClient()
+  await dbClient.connect()
+
   const body = await getJSONBody(req)
   const bodyAccount = await AccountSchema.validate(body).catch((err) => {
     dieWithBody(res, err.errors, 400)
     return
   })
 
-  const dbClient = genNewClient()
-  await dbClient.connect()
-  const entry = await dbAddEntry(dbClient, 'Account', bodyAccount)
+  if (!bodyAccount) {
+    dieWithBody(res, "invalid payload", 400)
+    return
+  }
+
+  const hash = await hashPassword(bodyAccount.password, "abc")
+  if (hash === undefined) {
+    dieWithBody(res, "internal storing error", 500)
+    return
+  }
+
+  const memoryCache = require('../db/cache')
+  let employees = await memoryCache.get('Employee')
+  if (employees === undefined) {
+    employees = await updateCacheTable(dbClient, 'Employee')
+  }
+
+  const referencedEmployee = employees.find(employee => bodyAccount.documento_empleado === employee.document)
+  if (referencedEmployee === undefined) {
+    dieWithBody(res, "account or password invalid", 404)
+    return
+  }
+
+  const entry = await dbAddEntry(dbClient, 'Account', {
+    username: bodyAccount.username,
+    employee_id: referencedEmployee.id,
+    hash: hash,
+    salt: "abc"
+  })
   await updateCacheTable(dbClient, 'Account')
   dbClient.end()
   answerAndClose(res, JSON.stringify(entry.rows), 200)
   return
 }
 
+const AccountVerifySchema = yup.object({
+  username: yup.string().required(),
+  password: yup.string().required(),
+})
+
 const verifyAccount = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
   const dbClient = genNewClient()
+  await dbClient.connect()
+
   const memoryCache = require('../db/cache')
-  const cachedRows: any[] = memoryCache.get('Account')
   const body = await getJSONBody(req)
 
-  if (cachedRows === undefined) {
-    await dbClient.connect()
-    await updateCacheTable(dbClient, 'Account')
-  }
-
-  const found = false
-  cachedRows.forEach(async (obj) => {
-    if (obj.username == body.username) {
-      const ver = await verifyPassword(body.password, obj.salt)
-      if (!ver) {
-        dieWithBody(res, "incorrect password", 200)
-        answerAndClose(res, JSON.stringify(obj), 200)
-        return
-      }
-    }
+  const parsedPayload = await AccountVerifySchema.validate(body).catch((err) => {
+    dieWithBody(res, err, 500)
   })
 
-  if (!found) {
-    dieWithBody(res, "user not found", 404)
+  if (!parsedPayload) {
+    dieWithBody(res, "invalid payload", 400)
     return
+  }
+
+  let cachedRows: any[] = memoryCache.get('Account')
+  if (cachedRows === undefined) {
+    cachedRows = await updateCacheTable(dbClient, 'Account')
+  }
+
+  const account = cachedRows.find(obj => obj.username === parsedPayload.username)
+  const verify = await verifyPassword(parsedPayload.password, account.salt, account.hash)
+
+  if (account === undefined) {
+    dieWithBody(res, "invalid password or username", 400)
+    return
+  }
+
+  if (verify) {
+    answerAndClose(res, JSON.stringify(account), 200)
+  } else {
+    dieWithBody(res, "invalid password or username", 400)
   }
 
   dbClient.end()
