@@ -1,12 +1,18 @@
-interface EmployeeType {
-  id: number,
-  team_id: number,
-  name: string,
-  last_name: string,
-  document: string,
-  birth: string,
-  area: string
-}
+import * as yup from 'yup'
+
+let employeeSchema = yup.object({
+  team_id: yup.number().required().positive().integer(),
+  name: yup.string().required(),
+  last_name: yup.string().required(),
+  document: yup.string().required(),
+  birth: yup.date().required(),
+  area: yup.string().required(),
+})
+
+let diseaseSchema = yup.object({
+  name: yup.string().required(),
+})
+
 
 interface AccountType {
   username: string,
@@ -15,8 +21,15 @@ interface AccountType {
   salt: string,
 }
 
+interface DiseaseType {
+  id: number,
+  name: string,
+}
+
 
 export {
-  EmployeeType,
+  employeeSchema,
+  diseaseSchema,
+  DiseaseType,
   AccountType
 }
