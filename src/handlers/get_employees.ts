@@ -15,23 +15,34 @@ import {
   getJSONBody,
   paramsToObject,
   answerAndClose,
-  updateCacheTable
+  updateCacheTable,
+  dieWithBody,
 } from './utils.js'
 
-import type {
-  EmployeeType
+import {
+  employeeSchema,
 } from '../internal/types'
 
 
 const regEmployees = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
   const body = await getJSONBody(req)
 
+  const parsedBody = await employeeSchema.validate(body).catch((err) => {
+    dieWithBody(res, err.errors, 400)
+    return
+  })
+
+  if (!parsedBody) {
+    dieWithBody(res, "invalid payload", 400)
+    return
+  }
+
   const dbClient = genNewClient()
   await dbClient.connect()
 
-  dbAddEntry(dbClient, "Employee", body).then((finalRes) => {
+  dbAddEntry(dbClient, "Employee", parsedBody).then((finalRes) => {
     dbClient.end()
-    const rows: EmployeeType[] = finalRes.rows
+    const rows = finalRes.rows
     answerAndClose(res, JSON.stringify(rows), 200)
   })
 
@@ -43,7 +54,7 @@ const getEmployees = async (_: IncomingMessage, res: ServerResponse, url: URL) =
   const params = paramsToObject(url.searchParams)
   const memoryCache = require('../db/cache')
   const dbClient = genNewClient()
-  let cachedRows: EmployeeType[] = memoryCache.get('Employee')
+  let cachedRows = memoryCache.get('Employee')
 
   if (cachedRows === undefined) {
     await dbClient.connect()
@@ -73,6 +84,3 @@ export {
   getEmployees,
   regEmployees
 }
-
-
-

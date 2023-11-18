@@ -4,40 +4,84 @@ import {
 } from 'node:http'
 
 import {
-  dbQuery, dbRetrieve
+  dbAddEntry,
 } from '../db/query.js'
 
 import {
   genNewClient
 } from '../db/init.js'
 
-/**
- * @param {IncomingMessage} req
- * @param {ServerResponse} res
- * @param {URL} url
- */
-const getDiseases = (req, res, url) => {
-  const dbClient = genNewClient()
+import {
+  getJSONBody,
+  paramsToObject,
+  answerAndClose,
+  updateCacheTable,
+  dieWithBody,
+} from './utils.js'
 
-  if (req.method == "GET") {
-    dbClient.connect(console.err).then(() => {
-      dbRetrieve(dbClient, "Disease", paramsToObjects url.searchParams)
-      dbQuery(dbClient, "Disease", url.searchParams).then((response) => {
-        dbClient.end()
-        res.write(JSON.stringify(response.rows))
-        res.writeHead(200)
-        res.end()
-        return
-      })
-    })
-  } else {
-    res.writeHead(405)
-    res.end()
+import {
+  diseaseSchema,
+} from '../internal/types'
+
+
+const regDiseases = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
+  const body = await getJSONBody(req)
+
+  const parsedBody = await diseaseSchema.validate(body).catch((err) => {
+    dieWithBody(res, err.errors, 400)
+    return
+  })
+
+  if (!parsedBody) {
+    dieWithBody(res, "invalid payload", 400)
     return
   }
+
+  const dbClient = genNewClient()
+  await dbClient.connect()
+
+  dbAddEntry(dbClient, "Disease", parsedBody).then((finalRes) => {
+    dbClient.end()
+    const rows = finalRes.rows
+    answerAndClose(res, JSON.stringify(rows), 200)
+  })
+
+  await updateCacheTable(dbClient, 'Disease')
+  return
+}
+
+const getDiseases = async (_: IncomingMessage, res: ServerResponse, url: URL) => {
+  const params = paramsToObject(url.searchParams)
+  const memoryCache = require('../db/cache')
+  const dbClient = genNewClient()
+  let cachedRows = memoryCache.get('Disease')
+
+  if (cachedRows === undefined) {
+    await dbClient.connect()
+    cachedRows  = await updateCacheTable(dbClient, 'Disease')
+    dbClient.end()
+  }
+
+  if (Object.keys(params).length === 0) {
+    answerAndClose(res, JSON.stringify(cachedRows), 200)
+    return
+  }
+
+   const filteredRows = cachedRows.filter((elem) => {
+    for (const key in params) {
+      if (elem[key] != params[key]) {
+        return false
+      }
+    }
+    return true
+  })
+
+  answerAndClose(res, JSON.stringify(filteredRows), 200)
+  return
 }
 
 export {
-  getDiseases
+  getDiseases,
+  regDiseases
 }
 

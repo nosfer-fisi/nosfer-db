@@ -1,7 +1,6 @@
 {
   "type": "module",
   "dependencies": {
-    "@types/node": "^20.9.0",
     "@types/pg": "^8.10.9",
     "dotenv": "^16.3.1",
     "pg": "^8.11.3",
@@ -14,6 +13,7 @@
     "serve": "bun -r dotenv/config ./src/serve.ts"
   },
   "devDependencies": {
+    "@types/node": "^20.9.1",
     "bun-types": "^1.0.11",
     "typescript": "^5.2.2"
   }
