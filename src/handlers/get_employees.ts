@@ -18,39 +18,37 @@ import {
   updateCacheTable
 } from './utils.js'
 
-/**
- * @param {IncomingMessage} req
- * @param {ServerResponse} res
- * @param {URL} url
- */
-const regEmployees = async (req, res, _) => {
-  const dbClient = genNewClient()
+import type {
+  EmployeeType
+} from '../internal/types'
+
+
+const regEmployees = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
   const body = await getJSONBody(req)
 
-  dbClient.connect(console.err).then(() => {
-    dbAddEntry(dbClient, "Employee", body).then((finalRes) => {
-      dbClient.end()
-      const rows = finalRes.rows
-      answerAndClose(res, JSON.stringify(rows), 200)
-    })
+  const dbClient = genNewClient()
+  await dbClient.connect()
+
+  dbAddEntry(dbClient, "Employee", body).then((finalRes) => {
+    dbClient.end()
+    const rows: EmployeeType[] = finalRes.rows
+    answerAndClose(res, JSON.stringify(rows), 200)
   })
 
-  updateCacheTable('Employee')
+  await updateCacheTable(dbClient, 'Employee')
   return
 }
 
-/**
- * @param {IncomingMessage} req
- * @param {ServerResponse} res
- * @param {URL} url
- */
-const getEmployees = async (_, res, url) => {
-  const memoryCache = require('../db/cache')
+const getEmployees = async (_: IncomingMessage, res: ServerResponse, url: URL) => {
   const params = paramsToObject(url.searchParams)
-  let cachedRows = memoryCache.get('Employee')
+  const memoryCache = require('../db/cache')
+  const dbClient = genNewClient()
+  let cachedRows: EmployeeType[] = memoryCache.get('Employee')
 
   if (cachedRows === undefined) {
-    cachedRows = await updateCacheTable('Employee')
+    await dbClient.connect()
+    cachedRows  = await updateCacheTable(dbClient, 'Employee')
+    dbClient.end()
   }
 
   if (Object.keys(params).length === 0) {

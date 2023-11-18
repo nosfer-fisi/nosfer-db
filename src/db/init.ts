@@ -1,10 +1,9 @@
-import pg from 'pg'
+import {
+  Client
+} from 'pg'
 
-/**
- * @returns {pg.Client}
- */
 const genNewClient = () => {
-  return new pg.Client({
+  return new Client({
     user:     process.env.USER,
     password: process.env.PASSWORD,
     host:     process.env.DB_HOST,

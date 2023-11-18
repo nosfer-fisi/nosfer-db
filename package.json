@@ -1,16 +1,20 @@
 {
   "type": "module",
   "dependencies": {
+    "@types/node": "^20.9.0",
+    "@types/pg": "^8.10.9",
     "dotenv": "^16.3.1",
     "pg": "^8.11.3",
     "sql-bricks": "^3.0.1",
-    "sql-bricks-postgres": "^0.6.0"
+    "sql-bricks-postgres": "^0.6.0",
+    "yup": "^1.3.2"
   },
   "scripts": {
-    "dev": "bun --watch -r dotenv/config ./src/serve.js",
-    "serve": "bun -r dotenv/config ./src/serve.js"
+    "dev": "bun --watch -r dotenv/config ./src/serve.ts",
+    "serve": "bun -r dotenv/config ./src/serve.ts"
   },
   "devDependencies": {
-    "bun-types": "^1.0.11"
+    "bun-types": "^1.0.11",
+    "typescript": "^5.2.2"
   }
 }

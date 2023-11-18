@@ -3,21 +3,15 @@ import {
   ServerResponse
 } from 'node:http'
 
+import { Client } from 'pg'
+
 import {
   dbRetrieve
 } from '../db/query'
 
-import {
-  genNewClient
-} from '../db/init'
-
-/**
- * @param {IncomingMessage} req
- * @returns {Promise<Object>}
- */
-const getJSONBody = async (req) => {
+const getJSONBody = async (req: IncomingMessage) => {
   let bodyChunks = ""
-  return new Promise((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     req.on("data", (data) => {
       bodyChunks += data
     })
@@ -34,30 +28,17 @@ const getJSONBody = async (req) => {
 
 }
 
-
-/**
- * @param {string} tableName
- * @returns {Promise<any[]>}
- */
-const updateCacheTable = async (tableName) => {
+const updateCacheTable = async (dbClient: Client, tableName: string) => {
   const memoryCache = require('../db/cache')
-  const dbClient = genNewClient()
-  dbClient.connect(console.err)
 
   const newMemory = await dbRetrieve(dbClient, tableName, {})
-  const rows = newMemory.rows
+  const rows: any[] = newMemory.rows
   memoryCache.set(tableName, rows)
-
-  dbClient.end()
   return rows
 }
 
-/**
- * @param {URLSearchParams} params
- * @returns {Object}
- */
-const paramsToObject = (params) => {
-  const res = {}
+const paramsToObject = (params: URLSearchParams) => {
+  const res: any = {}
   for (const [key, value] of params) {
     res[key] = value
   }
@@ -65,13 +46,7 @@ const paramsToObject = (params) => {
   return res
 }
 
-
-/**
- * @param {ServerResponse} res
- * @param {string} message
- * @param {number} code
- */
-const dieWithBody = (res, message, code) => {
+const dieWithBody = (res: ServerResponse, message: string | string[], code: number) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8")
   res.setHeader("Access-Control-Allow-Methods", "ANY")
   res.setHeader("Access-Control-Allow-Origin", "*")
@@ -86,12 +61,7 @@ const dieWithBody = (res, message, code) => {
   res.end()
 }
 
-/**
- * @param {ServerResponse} res
- * @param {string} message
- * @param {number} code
- */
-const answerAndClose = (res, message, code) => {
+const answerAndClose = (res: ServerResponse, message: string, code: number) => {
   res.write(message)
   res.writeHead(code)
   res.end()

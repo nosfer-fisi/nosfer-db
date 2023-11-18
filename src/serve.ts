@@ -27,7 +27,16 @@ import {
   verifyAccount
 } from './auth/login_account.js'
 
-const RouterMux = {
+type handleFunc = (req: http.IncomingMessage, res: http.ServerResponse, url: URL) => Promise<void>
+
+interface EndpointHandlerMux {
+  [key: string]: {
+    handle: handleFunc,
+    method: string,
+  }
+}
+
+const RouterMux: EndpointHandlerMux = {
   "/api/employees/get": {
     handle: getEmployees,
     method: "GET",
@@ -84,13 +93,15 @@ const RouterMux = {
   */
 }
 
-
 /**
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- * @return {void}
+ * This consumes the router map to handle all requests
  */
-const mainRequestHandler = (req, res) => {
+const mainRequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => {
+  if (req.url == undefined) {
+    dieWithBody(res, "invalid request", 500)
+    return
+  }
+
   const reqUrl = new URL(req.url, `http://${req.headers.host}`)
 
   if (RouterMux[reqUrl.pathname] === undefined) {
