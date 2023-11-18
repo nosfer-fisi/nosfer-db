@@ -1,41 +1,85 @@
 import {
     IncomingMessage,
     ServerResponse
-} from 'node:http'
-
-import {
-    dbQuery
-} from '../db/query.js'
-
-import {
+  } from 'node:http'
+  
+  import {
+    dbAddEntry,
+  } from '../db/query.js'
+  
+  import {
     genNewClient
-} from '../db/init.js'
-
-/**
- * @param {IncomingMessage} req
- * @param {ServerResponse} res
- * @param {URL} url
- */
-const getPersons = (req, res, url) => {
-    const dbClient = genNewClient()
-
-    if (req.method == "GET") {
-        dbClient.connect(console.err).then(() => {
-            dbQuery(dbClient, "Person", url.searchParams).then((response) => {
-                dbClient.end()
-                res.write(JSON.stringify(response.rows))
-                res.writeHead(200)
-                res.end()
-                return
-            })
-        })
-    } else {
-        res.writeHead(405)
-        res.end()
-        return
+  } from '../db/init.js'
+  
+  import {
+    getJSONBody,
+    paramsToObject,
+    answerAndClose,
+    updateCacheTable,
+    dieWithBody,
+  } from './utils.js'
+  
+  import {
+    personSchema,
+  } from '../internal/types'
+  
+  
+  const regPersons = async (req: IncomingMessage, res: ServerResponse, _: URL) => {
+    const body = await getJSONBody(req)
+  
+    const parsedBody = await personSchema.validate(body).catch((err) => {
+      dieWithBody(res, err.errors, 400)
+      return
+    })
+  
+    if (!parsedBody) {
+      dieWithBody(res, "invalid payload", 400)
+      return
     }
-}
-
-export {
-    getPersons
-}
+  
+    const dbClient = genNewClient()
+    await dbClient.connect()
+  
+    const newEntry = await dbAddEntry(dbClient, "Person", parsedBody)
+    const rows = newEntry.rows
+    await updateCacheTable(dbClient, 'Person')
+  
+    dbClient.end()
+    answerAndClose(res, JSON.stringify(rows), 200)
+    return
+  }
+  
+  const getPersons = async (_: IncomingMessage, res: ServerResponse, url: URL) => {
+    const params = paramsToObject(url.searchParams)
+    const memoryCache = require('../db/cache')
+    const dbClient = genNewClient()
+    let cachedRows = memoryCache.get('Person')
+  
+    if (cachedRows === undefined) {
+      await dbClient.connect()
+      cachedRows  = await updateCacheTable(dbClient, 'Person')
+      dbClient.end()
+    }
+  
+    if (Object.keys(params).length === 0) {
+      answerAndClose(res, JSON.stringify(cachedRows), 200)
+      return
+    }
+  
+     const filteredRows = cachedRows.filter((elem) => {
+      for (const key in params) {
+        if (elem[key] != params[key]) {
+          return false
+        }
+      }
+      return true
+    })
+  
+    answerAndClose(res, JSON.stringify(filteredRows), 200)
+    return
+  }
+  
+  export {
+    getPersons,
+    regPersons
+  }

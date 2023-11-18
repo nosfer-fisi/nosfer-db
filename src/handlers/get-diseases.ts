@@ -40,13 +40,12 @@ const regDiseases = async (req: IncomingMessage, res: ServerResponse, _: URL) =>
   const dbClient = genNewClient()
   await dbClient.connect()
 
-  dbAddEntry(dbClient, "Disease", parsedBody).then((finalRes) => {
-    dbClient.end()
-    const rows = finalRes.rows
-    answerAndClose(res, JSON.stringify(rows), 200)
-  })
-
+  const newEntry = await dbAddEntry(dbClient, "Disease", parsedBody)
+  const rows = newEntry.rows
   await updateCacheTable(dbClient, 'Disease')
+
+  dbClient.end()
+  answerAndClose(res, JSON.stringify(rows), 200)
   return
 }
 
@@ -84,4 +83,3 @@ export {
   getDiseases,
   regDiseases
 }
-
