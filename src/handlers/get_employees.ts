@@ -40,13 +40,12 @@ const regEmployees = async (req: IncomingMessage, res: ServerResponse, _: URL) =
   const dbClient = genNewClient()
   await dbClient.connect()
 
-  dbAddEntry(dbClient, "Employee", parsedBody).then((finalRes) => {
-    dbClient.end()
-    const rows = finalRes.rows
-    answerAndClose(res, JSON.stringify(rows), 200)
-  })
-
+  const newEntry = await dbAddEntry(dbClient, "Employee", parsedBody)
+  const rows = newEntry.rows
   await updateCacheTable(dbClient, 'Employee')
+
+  dbClient.end()
+  answerAndClose(res, JSON.stringify(rows), 200)
   return
 }
 
